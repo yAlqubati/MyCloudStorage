@@ -1,0 +1,10 @@
+# Ignore the environment variables file
+.env
+
+# Ignore .NET build folders
+bin/
+obj/
+
+# Ignore IDE settings
+.vs/
+.vscode/
