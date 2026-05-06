@@ -5,11 +5,8 @@ using System.Threading.Tasks;
 
 namespace MyCloudStorage.DTOs.User
 {
-    public class AuthResponseDto
+    public class RefreshTokenRequestDto
     {
-        public bool Success { get; set; }
-        public string? Token { get; set; }
-        public string? Errors { get; set; }
         public string RefreshToken { get; set; }
     }
 }

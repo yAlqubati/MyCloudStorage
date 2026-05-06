@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -15,10 +16,12 @@ namespace MyCloudStorage.Controllers
     public class AuthController : ControllerBase
     {
        private readonly IAuthService _authService;
+       private readonly ITokenService _tokenService;
 
-       public AuthController(IAuthService authservice)
+        public AuthController(IAuthService authservice, ITokenService tokenService)
         {
             _authService = authservice;
+            _tokenService = tokenService;
         }
 
         [HttpPost("register")]
@@ -41,6 +44,14 @@ namespace MyCloudStorage.Controllers
                 return BadRequest(result.Errors);
 
             return Ok(result);
+        }
+
+        [HttpPost("refresh")]
+        [Authorize]
+        public async Task<IActionResult> RefreshToken(RefreshTokenRequestDto refreshToken)
+        {
+            var response = await _tokenService.RefreshToken(refreshToken.RefreshToken);
+            return Ok(response);
         }
 
     }

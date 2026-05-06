@@ -7,6 +7,7 @@ using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.Domain.Entities;
 using MyCloudStorage.DTOs.User;
 
+
 namespace MyCloudStorage.Application.Services
 {
     public class AuthService : IAuthService
@@ -81,10 +82,13 @@ namespace MyCloudStorage.Application.Services
 
             var token = _tokenService.CreateToken(user);
 
+            var refreshToken= await _tokenService.CreateRefreshTokenAsync(user.Id);
+
             return new AuthResponseDto
             {
                 Success = true,
-                Token = token
+                Token = token,
+                RefreshToken = refreshToken
             };
         }
     }

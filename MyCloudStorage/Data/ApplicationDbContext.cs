@@ -17,5 +17,6 @@ namespace MyCloudStorage.Data
 
         public DbSet<FileEntity> Files {get; set;}
         public DbSet<Folder> Folders { get; set; }
+        public DbSet<RefreshToken> RefreshTokens {get; set;}
     }
 }
