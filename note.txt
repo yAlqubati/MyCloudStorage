@@ -1,2 +1,1 @@
-do the refresh tokens
 login directly after registration

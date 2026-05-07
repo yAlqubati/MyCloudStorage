@@ -27,7 +27,8 @@ namespace MyCloudStorage.Application.Services
         {
             var claim = new[]
             {
-                new Claim(ClaimTypes.Email , user.Email)
+                new Claim(ClaimTypes.Email , user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY")));

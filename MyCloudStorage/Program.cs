@@ -1,4 +1,5 @@
 using System.Text;
+using AutoMapper;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -8,11 +9,15 @@ using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.Application.Services;
 using MyCloudStorage.Data;
 using MyCloudStorage.Domain.Entities;
+using MyCloudStorage.Repositories;
 using Serilog;
 using Serilog.Events;
+using Microsoft.OpenApi.Models;
 
 
 Env.Load();
+
+
 
 // Serilog configuration
 Log.Logger = new LoggerConfiguration()
@@ -29,11 +34,47 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog(); 
 
+// swagger stuff
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "MyCloudStorage API",
+        Version = "v1"
+    });
+
+    // 🔐 JWT Authentication in Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter: Bearer {your JWT token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
@@ -76,6 +117,14 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY")))
         };
     });
+
+
+// Repositories
+builder.Services.AddScoped<IFolderRepo, FolderRepo>();
+
+
+// Services
+builder.Services.AddScoped<IFolderService, FolderService>();
 
 
 builder.Services.AddScoped<IAuthService, AuthService>();

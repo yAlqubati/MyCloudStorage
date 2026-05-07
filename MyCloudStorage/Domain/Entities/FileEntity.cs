@@ -13,8 +13,13 @@ namespace MyCloudStorage.Domain.Entities
         public string StorageKey { get; set; } = string.Empty;
         public DateTime CreatedAt {get; set;} = DateTime.UtcNow;
         public string FileType {get;set;} = string.Empty;
+        
         public string UserId { get; set; } = string.Empty;
         public User User { get; set; }
 
+
+        public int FolderId {get; set;}
+        public Folder Folder {get; set;}
+        
     }
 }
