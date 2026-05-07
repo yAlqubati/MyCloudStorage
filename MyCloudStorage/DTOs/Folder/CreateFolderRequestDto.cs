@@ -8,6 +8,6 @@ namespace MyCloudStorage.DTOs.Folder
     public class CreateFolderRequestDto
     {
         public string Name { get; set; } = string.Empty;
-        public int ParentFolderId { get; set; }
+        public int? ParentFolderId { get; set; }
     }
 }
