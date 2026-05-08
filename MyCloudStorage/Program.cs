@@ -121,10 +121,12 @@ builder.Services.AddAuthentication(options =>
 
 // Repositories
 builder.Services.AddScoped<IFolderRepo, FolderRepo>();
+builder.Services.AddScoped<IFileRepo, FileRepo>();
 
 
 // Services
 builder.Services.AddScoped<IFolderService, FolderService>();
+builder.Services.AddScoped<IFileService, FileService>();
 
 
 builder.Services.AddScoped<IAuthService, AuthService>();

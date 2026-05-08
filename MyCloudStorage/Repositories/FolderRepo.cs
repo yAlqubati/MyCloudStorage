@@ -20,7 +20,7 @@ namespace MyCloudStorage.Repositories
             _logger = logger;
         }
 
-        public async Task<Folder?> GetByIdAsync(int id, string ownerId)
+        public async Task<Folder?> GetByIdAsync(int? id, string ownerId)
         {
             return await _context.Folders
                             .Include( f => f.ChildFolders)

@@ -15,11 +15,11 @@ namespace MyCloudStorage.Domain.Entities
         public string FileType {get;set;} = string.Empty;
         
         public string UserId { get; set; } = string.Empty;
-        public User User { get; set; }
+        public User? User { get; set; }
 
 
-        public int FolderId {get; set;}
-        public Folder Folder {get; set;}
+        public int? FolderId {get; set;}
+        public Folder? Folder {get; set;}
         
     }
 }
