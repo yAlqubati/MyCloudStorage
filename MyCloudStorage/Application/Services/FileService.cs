@@ -46,14 +46,14 @@ namespace MyCloudStorage.Application.Services
             return _mapper.Map<FileResponseDto>(file);
         }
 
-        public async Task<FileResponseDto?> GetFileById(int fileId, string ownerId)
+        public async Task<FileResponseDto?> GetFileById(Guid fileId, string ownerId)
         {
             var file = await _fileRepo.GetByIdAsync(fileId, ownerId);
 
             return _mapper.Map<FileResponseDto>(file);
         }
 
-        public async Task<List<FileResponseDto>> GetFilesByFolder(string ownerId, int? folderId)
+        public async Task<List<FileResponseDto>> GetFilesByFolder(string ownerId, Guid? folderId)
         {
             // If folderId provided, verify the folder exists and belongs to this user
             if (folderId.HasValue)
@@ -67,7 +67,7 @@ namespace MyCloudStorage.Application.Services
             return _mapper.Map<List<FileResponseDto>>(files);
         }
 
-        public async Task<FileResponseDto> RenameFile(string ownerId, int fileId, RenameFileRequestDto request)
+        public async Task<FileResponseDto> RenameFile(string ownerId, Guid fileId, RenameFileRequestDto request)
         {
             var file = await _fileRepo.GetByIdAsync(fileId, ownerId);
             if (file is null)
@@ -83,7 +83,7 @@ namespace MyCloudStorage.Application.Services
             return _mapper.Map<FileResponseDto>(file);
         }
 
-        public async Task<bool> DeleteFile(string ownerId, int fileId)
+        public async Task<bool> DeleteFile(string ownerId, Guid fileId)
         {
             var file = await _fileRepo.GetByIdAsync(fileId, ownerId);
             if (file is null) return false;

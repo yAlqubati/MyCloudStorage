@@ -33,7 +33,7 @@ namespace MyCloudStorage.Application.Services
             var folder = _mapper.Map<Folder>(request);
             folder.OwnerId = ownerId;
 
-            if(folder.ParentFolderId == 0)  folder.ParentFolderId = null;
+            // if(folder.ParentFolderId == 0)  folder.ParentFolderId = null;
 
             await _folderRepo.CreateFolderAsync(folder);
             await _folderRepo.SaveChangesAsync();
@@ -41,7 +41,7 @@ namespace MyCloudStorage.Application.Services
             return _mapper.Map<FolderResponseDto>(folder);
         }
 
-        public async Task<bool> DeleteFolder(string ownerId, int folderId)
+        public async Task<bool> DeleteFolder(string ownerId, Guid folderId)
         {
             var wantedFolder = await _folderRepo.GetByIdAsync(folderId, ownerId);
             if(wantedFolder is null) return false;
@@ -52,7 +52,7 @@ namespace MyCloudStorage.Application.Services
             return true;
         }
 
-        public async Task<List<FolderResponseDto>> GetChildFolders(string ownerId, int parentId)
+        public async Task<List<FolderResponseDto>> GetChildFolders(string ownerId, Guid parentId)
         {
             var exist = await _folderRepo.GetByIdAsync(parentId, ownerId);
             if(exist is null)   throw new InvalidOperationException("This folder does not exist.");
@@ -63,7 +63,7 @@ namespace MyCloudStorage.Application.Services
             
         }
 
-        public async Task<FolderResponseDto> GetFolderById(int folderId, string ownerId)
+        public async Task<FolderResponseDto> GetFolderById(Guid folderId, string ownerId)
         {
             var exist = await _folderRepo.GetByIdAsync(folderId, ownerId);
             if(exist is null)   throw new InvalidOperationException("This folder does not exist.");
@@ -78,7 +78,7 @@ namespace MyCloudStorage.Application.Services
             return _mapper.Map<List<FolderResponseDto>>(folders);
         }
 
-        public async Task<FolderResponseDto> RenameFolder(string ownerId, int folderId, RenameFolderRequestDto request)
+        public async Task<FolderResponseDto> RenameFolder(string ownerId, Guid folderId, RenameFolderRequestDto request)
         {
             var exist = await _folderRepo.GetByIdAsync(folderId, ownerId);
             if(exist is null ) throw new InvalidOperationException("This folder does not exist.");

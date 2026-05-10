@@ -12,11 +12,6 @@ namespace MyCloudStorage.DTOs.File
         public string FileType { get; set; } = string.Empty;
         public string StorageKey { get; set; } = string.Empty;
 
-        private int? _folderId;
-        public int? FolderId
-        {
-            get => _folderId;
-            set => _folderId = (value == 0) ? null : value;  // treat 0 as root
-        }
+        public Guid? FolderId { get; set; }
     }
 }

@@ -41,7 +41,7 @@ namespace MyCloudStorage.Controllers
         }
 
         [HttpGet("{fileId}")]
-        public async Task<IActionResult> GetById(int fileId)
+        public async Task<IActionResult> GetById(Guid fileId)
         {
             try
             {
@@ -55,13 +55,13 @@ namespace MyCloudStorage.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetByFolder([FromQuery] int? folderId)
+        public async Task<IActionResult> GetByFolder([FromQuery] Guid? folderId)
         {
             try
             {
                 // normalize 0 to null here too, in case it comes via query string
-                var normalizedId = (folderId == 0) ? null : folderId;
-                var result = await _fileService.GetFilesByFolder(ownerId, normalizedId);
+                //var normalizedId = (folderId == 0) ? null : folderId;
+                var result = await _fileService.GetFilesByFolder(ownerId, folderId);
                 return Ok(result);
             }
             catch (InvalidOperationException ex)
@@ -71,7 +71,7 @@ namespace MyCloudStorage.Controllers
         }
 
         [HttpPatch("{fileId}/rename")]
-        public async Task<IActionResult> Rename(int fileId, [FromBody] RenameFileRequestDto request)
+        public async Task<IActionResult> Rename(Guid fileId, [FromBody] RenameFileRequestDto request)
         {
             try
             {
@@ -85,7 +85,7 @@ namespace MyCloudStorage.Controllers
         }
 
         [HttpDelete("{fileId}")]
-        public async Task<IActionResult> Delete(int fileId)
+        public async Task<IActionResult> Delete(Guid fileId)
         {
             var deleted = await _fileService.DeleteFile(ownerId, fileId);
             return deleted ? NoContent() : NotFound(new { error = "File not found." });

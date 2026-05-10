@@ -156,11 +156,9 @@ namespace MyCloudStorage.Migrations
 
             modelBuilder.Entity("MyCloudStorage.Domain.Entities.FileEntity", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -169,8 +167,8 @@ namespace MyCloudStorage.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("FolderId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("FolderId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -198,11 +196,9 @@ namespace MyCloudStorage.Migrations
 
             modelBuilder.Entity("MyCloudStorage.Domain.Entities.Folder", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -215,8 +211,8 @@ namespace MyCloudStorage.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("ParentFolderId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("ParentFolderId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 

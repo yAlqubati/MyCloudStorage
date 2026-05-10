@@ -10,10 +10,10 @@ namespace MyCloudStorage.Application.Interfaces
     {
         Task CreateFolderAsync(Folder folder);
         Task DeleteFolder(Folder folder);
-        Task<Folder?> GetByIdAsync(int? id, string ownerId);
-        Task<List<Folder>> GetChildFolderAsync (int parentId, string ownerId);
+        Task<Folder?> GetByIdAsync(Guid? id, string ownerId);
+        Task<List<Folder>> GetChildFolderAsync (Guid parentId, string ownerId);
         Task<List<Folder>> GetRootFoldersAsync(string ownerId);
-        Task<bool> ExistsAsync(string name, int? parentFolderId, string ownerId);  // ✅ new
+        Task<bool> ExistsAsync(string name, Guid? parentFolderId, string ownerId);  // ✅ new
 
         Task SaveChangesAsync();
 

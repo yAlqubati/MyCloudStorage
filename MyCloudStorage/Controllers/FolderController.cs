@@ -43,21 +43,21 @@ namespace MyCloudStorage.Controllers
         }
 
         [HttpGet("{parentFolderId}/children")]
-        public async Task<IActionResult> GetChildren(int parentFolderId)
+        public async Task<IActionResult> GetChildren(Guid parentFolderId)
         {
             var result = await _folderService.GetChildFolders(ownerId, parentFolderId);
             return Ok(result);
         }
 
         [HttpPatch("{folderId}/rename")]
-        public async Task<IActionResult> Rename(int folderId, [FromBody] RenameFolderRequestDto request)
+        public async Task<IActionResult> Rename(Guid folderId, [FromBody] RenameFolderRequestDto request)
         {
             var result = await _folderService.RenameFolder(ownerId, folderId, request);
             return result is null ? NotFound() : Ok(result);
         }
 
         [HttpDelete("{folderId}")]
-        public async Task<IActionResult> Delete(int folderId)
+        public async Task<IActionResult> Delete(Guid folderId)
         {
             var deleted = await _folderService.DeleteFolder(ownerId, folderId);
             return deleted ? NoContent() : NotFound();

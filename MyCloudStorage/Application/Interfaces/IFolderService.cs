@@ -9,11 +9,11 @@ namespace MyCloudStorage.Application.Interfaces
     public interface IFolderService
     {
         public Task<FolderResponseDto> CreateFolder(CreateFolderRequestDto request, string ownerId);
-        public Task<FolderResponseDto> RenameFolder(string ownerId, int folderId, RenameFolderRequestDto request);
-        public Task<bool> DeleteFolder(string ownerId, int folderId);
-        public Task<List<FolderResponseDto>> GetChildFolders(string ownerId, int parentId);
+        public Task<FolderResponseDto> RenameFolder(string ownerId, Guid folderId, RenameFolderRequestDto request);
+        public Task<bool> DeleteFolder(string ownerId, Guid folderId);
+        public Task<List<FolderResponseDto>> GetChildFolders(string ownerId, Guid parentId);
         public Task<List<FolderResponseDto>> GetRootFolders(string ownerId);
-        public Task<FolderResponseDto> GetFolderById(int folderId, string ownerId);
+        public Task<FolderResponseDto> GetFolderById(Guid folderId, string ownerId);
 
     }
 }

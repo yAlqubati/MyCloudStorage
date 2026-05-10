@@ -10,9 +10,9 @@ namespace MyCloudStorage.Application.Interfaces
     {
         Task CreateFileAsync(FileEntity file);
         Task DeleteFile(FileEntity file);
-        Task<FileEntity?> GetByIdAsync(int fileId, string ownerId);
-        Task<List<FileEntity>> GetFilesByFolderAsync(int? folderId, string ownerId);
-        Task<bool> ExistAsync(string name,int? folderId, string ownerId);
+        Task<FileEntity?> GetByIdAsync(Guid fileId, string ownerId);
+        Task<List<FileEntity>> GetFilesByFolderAsync(Guid? folderId, string ownerId);
+        Task<bool> ExistAsync(string name,Guid? folderId, string ownerId);
         Task SaveChangesAsync();
     }
 }

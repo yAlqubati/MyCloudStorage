@@ -20,7 +20,7 @@ namespace MyCloudStorage.Repositories
             _logger = logger;
         }
 
-        public async Task<Folder?> GetByIdAsync(int? id, string ownerId)
+        public async Task<Folder?> GetByIdAsync(Guid? id, string ownerId)
         {
             return await _context.Folders
                             .Include( f => f.ChildFolders)
@@ -28,7 +28,7 @@ namespace MyCloudStorage.Repositories
                             .FirstOrDefaultAsync(f => f.Id == id && f.OwnerId == ownerId);
         }
 
-        public async Task<List<Folder>> GetChildFolderAsync(int parentId, string ownerId)
+        public async Task<List<Folder>> GetChildFolderAsync(Guid parentId, string ownerId)
         {
             return await _context.Folders
                         .Where(f => f.ParentFolderId == parentId && f.OwnerId == ownerId)
@@ -43,7 +43,7 @@ namespace MyCloudStorage.Repositories
                             .ToListAsync();
         }
 
-        public async Task<bool> ExistsAsync(string name, int? parentFolderId, string ownerId)
+        public async Task<bool> ExistsAsync(string name, Guid? parentFolderId, string ownerId)
         {
             return await _context.Folders
                 .AnyAsync(f =>

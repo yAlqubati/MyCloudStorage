@@ -31,20 +31,20 @@ namespace MyCloudStorage.Repositories
             await Task.CompletedTask;
         }
 
-        public async Task<bool> ExistAsync(string name,int? folderId, string ownerId)
+        public async Task<bool> ExistAsync(string name,Guid? folderId, string ownerId)
         {
              return await _context.Files
                     .AnyAsync(f => f.Name == name && f.UserId == ownerId && f.FolderId == folderId);
         }
 
-        public async Task<FileEntity?> GetByIdAsync(int fileId, string ownerId)
+        public async Task<FileEntity?> GetByIdAsync(Guid fileId, string ownerId)
         {
             return await _context.Files
                     .Include(f => f.Folder)
                     .FirstOrDefaultAsync(f => f.Id == fileId && f.UserId == ownerId);
         }
 
-        public async Task<List<FileEntity>> GetFilesByFolderAsync(int? folderId, string ownerId)
+        public async Task<List<FileEntity>> GetFilesByFolderAsync(Guid? folderId, string ownerId)
         {
             return await _context.Files
                 .Where(f => f.FolderId == folderId && f.UserId == ownerId)

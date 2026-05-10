@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyCloudStorage.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260507145758_FoldersAndFilesMigrationFix")]
-    partial class FoldersAndFilesMigrationFix
+    [Migration("20260510104833_UseGuidIds")]
+    partial class UseGuidIds
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -159,11 +159,9 @@ namespace MyCloudStorage.Migrations
 
             modelBuilder.Entity("MyCloudStorage.Domain.Entities.FileEntity", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -172,8 +170,8 @@ namespace MyCloudStorage.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("FolderId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("FolderId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -201,11 +199,9 @@ namespace MyCloudStorage.Migrations
 
             modelBuilder.Entity("MyCloudStorage.Domain.Entities.Folder", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -218,8 +214,8 @@ namespace MyCloudStorage.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("ParentFolderId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("ParentFolderId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -390,9 +386,7 @@ namespace MyCloudStorage.Migrations
                 {
                     b.HasOne("MyCloudStorage.Domain.Entities.Folder", "Folder")
                         .WithMany("Files")
-                        .HasForeignKey("FolderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("FolderId");
 
                     b.HasOne("MyCloudStorage.Domain.Entities.User", "User")
                         .WithMany()
