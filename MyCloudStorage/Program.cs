@@ -122,12 +122,14 @@ builder.Services.AddAuthentication(options =>
 // Repositories
 builder.Services.AddScoped<IFolderRepo, FolderRepo>();
 builder.Services.AddScoped<IFileRepo, FileRepo>();
+builder.Services.AddScoped<IUploadSessionRepo, UploadSessionRepo>();
 
 
 // Services
 builder.Services.AddScoped<IFolderService, FolderService>();
 builder.Services.AddScoped<IFileService, FileService>();
-
+builder.Services.AddScoped<IChunkedUploadService, ChunkedUploadService>();
+builder.Services.AddScoped<IStorageService, LocalStorageService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
