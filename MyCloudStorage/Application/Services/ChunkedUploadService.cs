@@ -20,6 +20,7 @@ namespace MyCloudStorage.Application.Services
         private readonly ILogger<ChunkedUploadService> _logger;
         private readonly string _basePath;
         private readonly string _tempPath;
+        private readonly IStorageService _storageService;
 
         public ChunkedUploadService(
             IUploadSessionRepo sessionRepo,
@@ -27,7 +28,8 @@ namespace MyCloudStorage.Application.Services
             IFolderRepo folderRepo,
             IMapper mapper,
             IConfiguration config,
-            ILogger<ChunkedUploadService> logger)
+            ILogger<ChunkedUploadService> logger,
+            IStorageService storageService)
         {
             _sessionRepo = sessionRepo;
             _fileRepo = fileRepo;
@@ -36,6 +38,7 @@ namespace MyCloudStorage.Application.Services
             _logger = logger;
             _basePath = config["Storage:BasePath"] ?? "uploads";
             _tempPath = config["Storage:TempPath"] ?? "uploads/temp";
+            _storageService = storageService;
         }
 
         public async Task CancelUploadAsync(Guid sessionId, string ownerId)
@@ -152,30 +155,29 @@ namespace MyCloudStorage.Application.Services
             };
         }
 
-        public async Task<FileResponseDto> AssembleFileAsync(UploadSession session)
+        private async Task<FileResponseDto> AssembleFileAsync(UploadSession session)
         {
             var extension = Path.GetExtension(session.FileName);
             var storageKey = $"{session.UserId}/{Guid.NewGuid()}{extension}";
-            var finalPath = Path.Combine(_basePath, storageKey);
 
-            Directory.CreateDirectory(Path.GetDirectoryName(finalPath)!);
+            using var finalStream = new MemoryStream();
 
-            using(var finalStream = new FileStream(finalPath, FileMode.Create, FileAccess.Write))
+            for (int i = 0; i < session.TotalChunks; i++)
             {
-                for(int i = 0 ; i < session.TotalChunks; i++)
-                {
-                    var chunkPath = Path.Combine(session.TempDirectory, $"chunk_{i}");
+                var chunkPath = Path.Combine(session.TempDirectory, $"chunk_{i}");
 
-                    if (!File.Exists(chunkPath))
-                        throw new InvalidOperationException(
-                            $"Chunk {i} is missing. Cannot assemble file.");
+                if (!File.Exists(chunkPath))
+                    throw new InvalidOperationException($"Chunk {i} is missing. Cannot assemble file.");
 
-                    using var chunkStream = new FileStream(chunkPath, FileMode.Open, FileAccess.Read);
-                    await chunkStream.CopyToAsync(finalStream);
-                }
+                using var chunkStream = new FileStream(chunkPath, FileMode.Open, FileAccess.Read);
+                await chunkStream.CopyToAsync(finalStream);
             }
 
-            var fileMetaData = new FileEntity
+            finalStream.Position = 0;
+
+            await _storageService.SaveFileAsync(finalStream, storageKey);
+
+            var fileEntity = new FileEntity
             {
                 Name = session.FileName,
                 Size = session.TotalSize,
@@ -185,16 +187,14 @@ namespace MyCloudStorage.Application.Services
                 UserId = session.UserId
             };
 
-            await _fileRepo.CreateFileAsync(fileMetaData);
-            await _fileRepo.SaveChangesAsync();
-
+            await _fileRepo.CreateFileAsync(fileEntity);
             await CleanupSessionAsync(session);
             await _sessionRepo.SaveChangesAsync();
 
-            _logger.LogInformation("File {FileName} assembled from {Chunks} chunks, StorageKey: {Key}",
-                session.FileName, session.TotalChunks, storageKey);
+            _logger.LogInformation("File {FileName} assembled and saved with key {StorageKey}",
+                session.FileName, storageKey);
 
-            return _mapper.Map<FileResponseDto>(fileMetaData);
+            return _mapper.Map<FileResponseDto>(fileEntity);
         }
 
         private async Task CleanupSessionAsync(UploadSession session)
