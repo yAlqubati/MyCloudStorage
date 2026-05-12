@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
-using Humanizer;
-using Microsoft.AspNetCore.Antiforgery;
 using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.Domain.Entities;
 using MyCloudStorage.DTOs.File;
@@ -159,24 +153,41 @@ namespace MyCloudStorage.Application.Services
         {
             var extension = Path.GetExtension(session.FileName);
             var storageKey = $"{session.UserId}/{Guid.NewGuid()}{extension}";
+            var finalPath = Path.Combine(_basePath, storageKey);
 
-            using var finalStream = new MemoryStream();
+            Directory.CreateDirectory(Path.GetDirectoryName(finalPath)!);
 
-            for (int i = 0; i < session.TotalChunks; i++)
+            // ✅ Write directly to the output file — no MemoryStream, no full file in RAM
+            using (var finalStream = new FileStream(
+                finalPath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 81920,      // 80KB buffer — same as CopyToAsync default
+                useAsync: true))        // use async I/O at OS level
             {
-                var chunkPath = Path.Combine(session.TempDirectory, $"chunk_{i}");
+                for (int i = 0; i < session.TotalChunks; i++)
+                {
+                    var chunkPath = Path.Combine(session.TempDirectory, $"chunk_{i}");
 
-                if (!File.Exists(chunkPath))
-                    throw new InvalidOperationException($"Chunk {i} is missing. Cannot assemble file.");
+                    if (!File.Exists(chunkPath))
+                        throw new InvalidOperationException($"Chunk {i} is missing. Cannot assemble file.");
 
-                using var chunkStream = new FileStream(chunkPath, FileMode.Open, FileAccess.Read);
-                await chunkStream.CopyToAsync(finalStream);
+                    using var chunkStream = new FileStream(
+                        chunkPath,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.None,
+                        bufferSize: 81920,
+                        useAsync: true);
+
+                    await chunkStream.CopyToAsync(finalStream);
+                    // each chunk is read 80KB at a time and written immediately
+                    // RAM stays flat regardless of file size
+                }
             }
 
-            finalStream.Position = 0;
-
-            await _storageService.SaveFileAsync(finalStream, storageKey);
-
+            // Save metadata to DB
             var fileEntity = new FileEntity
             {
                 Name = session.FileName,
@@ -191,8 +202,8 @@ namespace MyCloudStorage.Application.Services
             await CleanupSessionAsync(session);
             await _sessionRepo.SaveChangesAsync();
 
-            _logger.LogInformation("File {FileName} assembled and saved with key {StorageKey}",
-                session.FileName, storageKey);
+            _logger.LogInformation("Assembled {FileName} from {Chunks} chunks, key: {Key}",
+                session.FileName, session.TotalChunks, storageKey);
 
             return _mapper.Map<FileResponseDto>(fileEntity);
         }
