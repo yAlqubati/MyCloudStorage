@@ -15,13 +15,15 @@ namespace MyCloudStorage.Application.Services
         private readonly IMapper _mapper;
         private readonly IFolderRepo _folderRepo;
         private readonly ILogger<FileService> _logger;
+        private readonly IStorageService _storageService;
 
-        public FileService(IFileRepo fileRepo, IMapper mapper, IFolderRepo folderRepo, ILogger<FileService> logger)
+        public FileService(IFileRepo fileRepo, IMapper mapper, IFolderRepo folderRepo, ILogger<FileService> logger, IStorageService storageService)
         {
             _fileRepo = fileRepo;
             _mapper = mapper;
             _folderRepo = folderRepo;
             _logger = logger;
+            _storageService = storageService;
         }
 
         public async Task<FileResponseDto> CreateFile(CreateFileRequestDto request, string ownerId)
@@ -55,7 +57,6 @@ namespace MyCloudStorage.Application.Services
 
         public async Task<List<FileResponseDto>> GetFilesByFolder(string ownerId, Guid? folderId)
         {
-            // If folderId provided, verify the folder exists and belongs to this user
             if (folderId.HasValue)
             {
                 var folder = await _folderRepo.GetByIdAsync(folderId.Value, ownerId);
@@ -94,7 +95,17 @@ namespace MyCloudStorage.Application.Services
             return true;
         }
 
+        public async Task<(Stream stream, string contentType, string fileName)> DownloadFileAsync(Guid fileId, string ownerId)
+        {
+            var file = await _fileRepo.GetByIdAsync(fileId,ownerId);
+            if(file is null)    throw new InvalidOperationException("File not found.");
 
+            var stream = await _storageService.GetFileAsync(file.StorageKey);
 
+        _logger.LogInformation("User {UserId} downloading file {FileId}", ownerId, fileId);
+
+        return (stream, file.FileType, file.Name);
+
+        }
     }
 }

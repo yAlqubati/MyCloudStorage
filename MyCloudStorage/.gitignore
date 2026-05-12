@@ -8,3 +8,5 @@ obj/
 # Ignore IDE settings
 .vs/
 .vscode/
+
+/uploads

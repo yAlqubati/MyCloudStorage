@@ -59,8 +59,6 @@ namespace MyCloudStorage.Controllers
         {
             try
             {
-                // normalize 0 to null here too, in case it comes via query string
-                //var normalizedId = (folderId == 0) ? null : folderId;
                 var result = await _fileService.GetFilesByFolder(ownerId, folderId);
                 return Ok(result);
             }
@@ -91,7 +89,20 @@ namespace MyCloudStorage.Controllers
             return deleted ? NoContent() : NotFound(new { error = "File not found." });
         }
 
+        [HttpGet("{fileId}/download")]
+        public async Task<IActionResult> Download(Guid fileId)
+        {
+            try
+            {
+                var (stream, fileType, fileName) = await _fileService.DownloadFileAsync(fileId, ownerId);
 
+                return File(stream, fileType, fileName);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { error = ex.Message });
+            }
+        }
 
 
     }

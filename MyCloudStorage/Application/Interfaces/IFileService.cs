@@ -12,6 +12,7 @@ namespace MyCloudStorage.Application.Interfaces
         Task<FileResponseDto> RenameFile(string ownerId, Guid fileId, RenameFileRequestDto request);
         Task<bool> DeleteFile(string ownerId, Guid fileId);
         Task<List<FileResponseDto>> GetFilesByFolder(string ownerId, Guid? folderId);
+        Task<(Stream stream, string contentType, string fileName)> DownloadFileAsync(Guid fileId, string ownerId);
         Task<FileResponseDto?> GetFileById(Guid fileId, string ownerId);
     }
 }
