@@ -33,7 +33,6 @@ namespace MyCloudStorage.Application.Services
             var folder = _mapper.Map<Folder>(request);
             folder.OwnerId = ownerId;
 
-            // if(folder.ParentFolderId == 0)  folder.ParentFolderId = null;
 
             await _folderRepo.CreateFolderAsync(folder);
             await _folderRepo.SaveChangesAsync();

@@ -29,57 +29,31 @@ namespace MyCloudStorage.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] CreateFileRequestDto request)
         {
-            try
-            {
-                var result = await _fileService.CreateFile(request, ownerId);
-                return CreatedAtAction(nameof(GetById), new { fileId = result.Id }, result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _fileService.CreateFile(request, ownerId);
+            return CreatedAtAction(nameof(GetById), new { fileId = result.Id }, result);
         }
 
         [HttpGet("{fileId}")]
         public async Task<IActionResult> GetById(Guid fileId)
         {
-            try
-            {
-                var result = await _fileService.GetFileById(fileId, ownerId);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return NotFound(new { error = ex.Message });
-            }
+            var result = await _fileService.GetFileById(fileId, ownerId);
+            return Ok(result);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetByFolder([FromQuery] Guid? folderId)
         {
-            try
-            {
-                var result = await _fileService.GetFilesByFolder(ownerId, folderId);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return NotFound(new { error = ex.Message });
-            }
+            
+            var result = await _fileService.GetFilesByFolder(ownerId, folderId);
+            return Ok(result);
+            
         }
 
         [HttpPatch("{fileId}/rename")]
         public async Task<IActionResult> Rename(Guid fileId, [FromBody] RenameFileRequestDto request)
         {
-            try
-            {
-                var result = await _fileService.RenameFile(ownerId, fileId, request);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _fileService.RenameFile(ownerId, fileId, request);
+            return Ok(result);
         }
 
         [HttpDelete("{fileId}")]
@@ -92,16 +66,8 @@ namespace MyCloudStorage.Controllers
         [HttpGet("{fileId}/download")]
         public async Task<IActionResult> Download(Guid fileId)
         {
-            try
-            {
-                var (stream, fileType, fileName) = await _fileService.DownloadFileAsync(fileId, ownerId);
-
+            var (stream, fileType, fileName) = await _fileService.DownloadFileAsync(fileId, ownerId);   
                 return File(stream, fileType, fileName);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return NotFound(new { error = ex.Message });
-            }
         }
 
 

@@ -31,15 +31,8 @@ namespace MyCloudStorage.Controllers
         [HttpPost("start")]
         public async Task<IActionResult> Start([FromBody] StartUploadRequestDto request)
         {
-            try
-            {
-                var result = await _uploadService.StartUploadAsync(request, OwnerId);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _uploadService.StartUploadAsync(request, OwnerId);
+            return Ok(result);
         }
 
 
@@ -47,20 +40,13 @@ namespace MyCloudStorage.Controllers
         [Consumes("multipart/form-data")]  // ✅ tells Swagger this is a form upload
         public async Task<IActionResult> UploadChunk([FromForm] UploadChunkRequestDto request)
         {
-            try
-            {
-                var result = await _uploadService.UploadChunkAsync(
-                    request.SessionId,
-                    request.ChunkIndex,
-                    request.Chunk,
-                    OwnerId);
-
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _uploadService.UploadChunkAsync(
+                request.SessionId,
+                request.ChunkIndex,
+                request.Chunk,
+                OwnerId);
+                
+            return Ok(result);
         }
 
         [HttpDelete("{sessionId}")]

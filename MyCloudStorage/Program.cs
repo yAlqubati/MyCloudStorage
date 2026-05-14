@@ -13,6 +13,7 @@ using MyCloudStorage.Repositories;
 using Serilog;
 using Serilog.Events;
 using Microsoft.OpenApi.Models;
+using MyCloudStorage.Exceptions;
 
 
 Env.Load();
@@ -130,6 +131,8 @@ builder.Services.AddScoped<IFolderService, FolderService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IChunkedUploadService, ChunkedUploadService>();
 builder.Services.AddScoped<IStorageService, LocalStorageService>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -137,6 +140,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 var app = builder.Build();
 app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

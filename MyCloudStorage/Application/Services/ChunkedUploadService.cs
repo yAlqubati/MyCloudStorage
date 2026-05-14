@@ -157,14 +157,13 @@ namespace MyCloudStorage.Application.Services
 
             Directory.CreateDirectory(Path.GetDirectoryName(finalPath)!);
 
-            // ✅ Write directly to the output file — no MemoryStream, no full file in RAM
             using (var finalStream = new FileStream(
                 finalPath,
                 FileMode.Create,
                 FileAccess.Write,
                 FileShare.None,
-                bufferSize: 81920,      // 80KB buffer — same as CopyToAsync default
-                useAsync: true))        // use async I/O at OS level
+                bufferSize: 81920,
+                useAsync: true))
             {
                 for (int i = 0; i < session.TotalChunks; i++)
                 {
@@ -182,8 +181,6 @@ namespace MyCloudStorage.Application.Services
                         useAsync: true);
 
                     await chunkStream.CopyToAsync(finalStream);
-                    // each chunk is read 80KB at a time and written immediately
-                    // RAM stays flat regardless of file size
                 }
             }
 
