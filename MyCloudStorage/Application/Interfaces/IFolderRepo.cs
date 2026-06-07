@@ -14,6 +14,7 @@ namespace MyCloudStorage.Application.Interfaces
         Task<List<Folder>> GetChildFolderAsync (Guid parentId, string ownerId);
         Task<List<Folder>> GetRootFoldersAsync(string ownerId);
         Task<bool> ExistsAsync(Guid? parentFolderId, string ownerId);
+        Task<bool> ExistsAsync(string name, Guid? parentFolderId, string ownerId);
 
         Task SaveChangesAsync();
 

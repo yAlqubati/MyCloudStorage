@@ -24,7 +24,7 @@ namespace MyCloudStorage.Application.Services
 
         public async Task<FolderResponseDto> CreateFolder(CreateFolderRequestDto request, string ownerId)
         {
-            var exist = await _folderRepo.ExistsAsync(request.ParentFolderId, ownerId);
+            var exist = await _folderRepo.ExistsAsync(request.Name,request.ParentFolderId, ownerId);
             if (exist)
             {
                 throw new InvalidOperationException("A folder with that name already exists here.");

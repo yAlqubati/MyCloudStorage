@@ -51,6 +51,15 @@ namespace MyCloudStorage.Repositories
                     f.OwnerId == ownerId);
         }
 
+        public async Task<bool> ExistsAsync(string name, Guid? parentFolderId, string ownerId)
+        {
+            return await _context.Folders
+                .AnyAsync(f =>
+                    f.Name == name &&
+                    f.ParentFolderId == parentFolderId &&
+                    f.OwnerId == ownerId);
+        }
+
 
         public async Task CreateFolderAsync(Folder folder)
         {
