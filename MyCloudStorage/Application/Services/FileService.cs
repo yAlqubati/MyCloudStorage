@@ -6,6 +6,7 @@ using AutoMapper;
 using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.Domain.Entities;
 using MyCloudStorage.DTOs.File;
+using MyCloudStorage.Exceptions;
 
 namespace MyCloudStorage.Application.Services
 {
@@ -16,6 +17,9 @@ namespace MyCloudStorage.Application.Services
         private readonly IFolderRepo _folderRepo;
         private readonly ILogger<FileService> _logger;
         private readonly IStorageService _storageService;
+        private IFileRepo object1;
+        private IFolderRepo object2;
+        private ILogger<FileService> object3;
 
         public FileService(IFileRepo fileRepo, IMapper mapper, IFolderRepo folderRepo, ILogger<FileService> logger, IStorageService storageService)
         {
@@ -24,6 +28,14 @@ namespace MyCloudStorage.Application.Services
             _folderRepo = folderRepo;
             _logger = logger;
             _storageService = storageService;
+        }
+
+        public FileService(IFileRepo object1, IMapper mapper, IFolderRepo object2, ILogger<FileService> object3)
+        {
+            this.object1 = object1;
+            _mapper = mapper;
+            this.object2 = object2;
+            this.object3 = object3;
         }
 
         public async Task<FileResponseDto> CreateFile(CreateFileRequestDto request, string ownerId)
@@ -105,6 +117,31 @@ namespace MyCloudStorage.Application.Services
         _logger.LogInformation("User {UserId} downloading file {FileId}", ownerId, fileId);
 
         return (stream, file.FileType, file.Name);
+
+        }
+
+        public async Task<FileResponseDto> MoveFile(MoveFileRequestDto request, string ownerId)
+        {
+            var file = await _fileRepo.GetByIdAsync(request.Id, ownerId);
+
+            if(file is null)    throw new InvalidOperationException("File Not found");
+
+            var sourceFolder = await _folderRepo.ExistsAsync(request.SourceFolderId, ownerId);
+            _logger.LogInformation("source folder: {@sourceFolder}",sourceFolder);
+            if(!sourceFolder) throw new InvalidOperationException("Source folder Not found");
+
+            var destinationFolder = await _folderRepo.ExistsAsync(request.DestinationFolderId, ownerId);
+            if(!destinationFolder) throw new InvalidOperationException("Destination folder Not found");
+
+            if(file.FolderId == request.DestinationFolderId)    throw new InvalidOperationException("File is already in that folder.");
+
+            var nameExists = await _fileRepo.ExistAsync(file.Name, request.DestinationFolderId, ownerId);
+            if (nameExists) throw new ConflictException("A file with that name already exists in the destination folder.");
+
+            file.FolderId = request.DestinationFolderId;
+            await _fileRepo.SaveChangesAsync();
+
+            return _mapper.Map<FileResponseDto>(file);
 
         }
     }

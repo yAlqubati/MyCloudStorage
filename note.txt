@@ -1,1 +1,2 @@
 login directly after registration
+check if a file with a specific name exists in the a specific directory, cause now we are only using the id and the ownerid and not the name

@@ -14,5 +14,6 @@ namespace MyCloudStorage.Application.Interfaces
         Task<List<FileResponseDto>> GetFilesByFolder(string ownerId, Guid? folderId);
         Task<(Stream stream, string contentType, string fileName)> DownloadFileAsync(Guid fileId, string ownerId);
         Task<FileResponseDto?> GetFileById(Guid fileId, string ownerId);
+        Task<FileResponseDto> MoveFile(MoveFileRequestDto request, string ownerId);
     }
 }

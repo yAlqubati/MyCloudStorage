@@ -56,6 +56,13 @@ namespace MyCloudStorage.Controllers
             return Ok(result);
         }
 
+        [HttpPatch("move")]
+        public async Task<IActionResult> Move([FromBody] MoveFileRequestDto request)
+        {
+            var result = await _fileService.MoveFile(request, ownerId);
+            return Ok(result);
+        }
+
         [HttpDelete("{fileId}")]
         public async Task<IActionResult> Delete(Guid fileId)
         {

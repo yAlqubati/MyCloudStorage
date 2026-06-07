@@ -43,12 +43,11 @@ namespace MyCloudStorage.Repositories
                             .ToListAsync();
         }
 
-        public async Task<bool> ExistsAsync(string name, Guid? parentFolderId, string ownerId)
+        public async Task<bool> ExistsAsync( Guid? FolderId, string ownerId)
         {
             return await _context.Folders
                 .AnyAsync(f =>
-                    f.Name == name &&
-                    f.ParentFolderId == parentFolderId &&
+                    f.Id == FolderId &&
                     f.OwnerId == ownerId);
         }
 

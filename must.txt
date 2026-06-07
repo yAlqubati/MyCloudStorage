@@ -1,10 +1,5 @@
-upload file
-downloadfile
-upload in chunks
-delete file
-create folders
+
 move files between folders
 share files by link
-authentication and users
 search
 
