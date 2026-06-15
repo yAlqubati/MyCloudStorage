@@ -1,5 +1,6 @@
 # Ignore the environment variables file
 .env
+.env.*
 
 # Ignore .NET build folders
 bin/

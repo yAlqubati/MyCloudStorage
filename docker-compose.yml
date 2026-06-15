@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: ./MyCloudStorage
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: on-failure
+    depends_on:
+      - postgres
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - JWT_KEY=${JWT_SECRET}
+      - JWT_ISSUER="http://localhost:5151"
+      - JWT_AUDIENCE="http://localhost:5151"
+      - ConnectionStrings__Default=${DB_CONNECTION_STRING}
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: my_cloud_storage_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -176,6 +176,27 @@ app.MapGet("/weatherforecast", () =>
 .WithOpenApi();
 
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        
+        if ((await context.Database.GetPendingMigrationsAsync()).Any())
+        {
+            await context.Database.MigrateAsync();
+            Console.WriteLine("--> Database migrations applied successfully.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"--> Error applying migrations: {ex.Message}");
+    }
+}
+
+
+
 
 app.Run();
 
