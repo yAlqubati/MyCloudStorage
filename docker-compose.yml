@@ -1,35 +1,46 @@
 version: "3.9"
 
 services:
-
   api:
     build:
       context: ./MyCloudStorage
       dockerfile: Dockerfile
+    container_name: cloud_backend
     ports:
-      - "8080:8080"
-    restart: on-failure
+      - "80:8080" # Maps public web port 80 directly to your .NET container
+    restart: always # Keeps your backend alive even if the server reboots
     depends_on:
       - postgres
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production # Changed from Development to optimize .NET compilation
       - JWT_KEY=${JWT_SECRET}
-      - JWT_ISSUER="http://localhost:5151"
-      - JWT_AUDIENCE="http://localhost:5151"
-      - ConnectionStrings__Default=${DB_CONNECTION_STRING}
+      - JWT_ISSUER="http://188.166.160.49" # Change to your domain name later
+      - JWT_AUDIENCE="http://188.166.160.49"
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=my_cloud_storage_db;Username=postgres;Password=${DB_PASSWORD:-postgres_password};
+    volumes:
+      - /app/mycloudstorage/uploads:/app/uploads # The magic line keeping uploaded files safe!
+    deploy:
+      resources:
+        limits:
+          memory: 1G 
+
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine # Using Alpine image variant because it uses significantly less RAM
     container_name: postgres
     restart: always
     environment:
       POSTGRES_DB: my_cloud_storage_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_password} # Uses a safe fallback if variable isn't injected
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M # Restricts Postgres caching limits to leave room for .NET
 
 volumes:
   postgres_data:

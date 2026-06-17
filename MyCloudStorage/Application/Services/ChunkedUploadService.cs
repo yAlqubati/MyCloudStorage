@@ -15,6 +15,7 @@ namespace MyCloudStorage.Application.Services
         private readonly string _basePath;
         private readonly string _tempPath;
         private readonly IStorageService _storageService;
+        private readonly IFileValidatorService _fileValidationService;
 
         public ChunkedUploadService(
             IUploadSessionRepo sessionRepo,
@@ -23,7 +24,9 @@ namespace MyCloudStorage.Application.Services
             IMapper mapper,
             IConfiguration config,
             ILogger<ChunkedUploadService> logger,
-            IStorageService storageService)
+            IStorageService storageService,
+            IFileValidatorService fileValidationService
+            )
         {
             _sessionRepo = sessionRepo;
             _fileRepo = fileRepo;
@@ -33,6 +36,7 @@ namespace MyCloudStorage.Application.Services
             _basePath = config["Storage:BasePath"] ?? "uploads";
             _tempPath = config["Storage:TempPath"] ?? "uploads/temp";
             _storageService = storageService;
+            _fileValidationService = fileValidationService;
         }
 
         public async Task CancelUploadAsync(Guid sessionId, string ownerId)
@@ -153,12 +157,11 @@ namespace MyCloudStorage.Application.Services
         {
             var extension = Path.GetExtension(session.FileName);
             var storageKey = $"{session.UserId}/{Guid.NewGuid()}{extension}";
-            var finalPath = Path.Combine(_basePath, storageKey);
+            var tempAssembledPath = Path.Combine(_tempPath, $"{session.Id}_assembled{extension}");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(finalPath)!);
 
             using (var finalStream = new FileStream(
-                finalPath,
+                tempAssembledPath,
                 FileMode.Create,
                 FileAccess.Write,
                 FileShare.None,
@@ -184,25 +187,52 @@ namespace MyCloudStorage.Application.Services
                 }
             }
 
-            // Save metadata to DB
-            var fileEntity = new FileEntity
+            try
             {
-                Name = session.FileName,
-                Size = session.TotalSize,
-                FileType = session.FileType,
-                StorageKey = storageKey,
-                FolderId = session.FolderId,
-                UserId = session.UserId
-            };
+                await _fileValidationService.ValidationAsync(tempAssembledPath, session.FileName, session.TotalSize, session.FileType);
+                
+                var finalPath = Path.Combine(_basePath, storageKey);
+                Directory.CreateDirectory(Path.GetDirectoryName(finalPath)!);
+                File.Move(tempAssembledPath, finalPath);
 
-            await _fileRepo.CreateFileAsync(fileEntity);
-            await CleanupSessionAsync(session);
-            await _sessionRepo.SaveChangesAsync();
+                // Save metadata to DB
+                var fileEntity = new FileEntity
+                {
+                    Name = session.FileName,
+                    Size = session.TotalSize,
+                    FileType = session.FileType,
+                    StorageKey = storageKey,
+                    FolderId = session.FolderId,
+                    UserId = session.UserId
+                };
 
-            _logger.LogInformation("Assembled {FileName} from {Chunks} chunks, key: {Key}",
-                session.FileName, session.TotalChunks, storageKey);
+                await _fileRepo.CreateFileAsync(fileEntity);
+                await CleanupSessionAsync(session);
+                await _sessionRepo.SaveChangesAsync();
 
-            return _mapper.Map<FileResponseDto>(fileEntity);
+
+                _logger.LogInformation("Assembled {FileName} from {Chunks} chunks, key: {Key}",
+                    session.FileName, session.TotalChunks, storageKey);
+
+                return _mapper.Map<FileResponseDto>(fileEntity);
+                
+            }
+            // you need to add another catch for virus detection, you will change the status and save in the db no CleanUpSessionAsync
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Validation or processing failed for file {FileName}", session.FileName);
+
+                if (File.Exists(tempAssembledPath))
+                {
+                    File.Delete(tempAssembledPath);
+                }
+                
+                await CleanupSessionAsync(session);
+                await _sessionRepo.SaveChangesAsync();
+                throw;
+            }
+
+        
         }
 
         private async Task CleanupSessionAsync(UploadSession session)

@@ -132,6 +132,7 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IChunkedUploadService, ChunkedUploadService>();
 builder.Services.AddScoped<IStorageService, LocalStorageService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddScoped<IFileValidatorService, FileValidationService>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -199,6 +200,10 @@ using (var scope = app.Services.CreateScope())
 
 
 app.Run();
+
+internal interface IFileValidationService
+{
+}
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {

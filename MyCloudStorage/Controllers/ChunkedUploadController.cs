@@ -37,7 +37,7 @@ namespace MyCloudStorage.Controllers
 
 
         [HttpPost("chunk")]
-        [Consumes("multipart/form-data")]  // ✅ tells Swagger this is a form upload
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadChunk([FromForm] UploadChunkRequestDto request)
         {
             var result = await _uploadService.UploadChunkAsync(
