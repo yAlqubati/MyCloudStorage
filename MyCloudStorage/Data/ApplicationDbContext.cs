@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MyCloudStorage.Domain.Entities;
@@ -19,5 +15,6 @@ namespace MyCloudStorage.Data
         public DbSet<Folder> Folders { get; set; }
         public DbSet<RefreshToken> RefreshTokens {get; set;}
         public DbSet<UploadSession> UploadSessions { get; set; }
+        public DbSet<FileShareEntity> SharedFiles{get;set;}
     }
 }
