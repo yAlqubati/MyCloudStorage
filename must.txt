@@ -6,3 +6,5 @@ rate limiting
 share files by link
 search
 
+
+if i shared the file and it expiered, i want to be able to make a new share

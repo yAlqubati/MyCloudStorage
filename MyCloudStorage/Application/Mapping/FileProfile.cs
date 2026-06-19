@@ -14,6 +14,7 @@ namespace MyCloudStorage.Application.Mapping
         {
             CreateMap<CreateFileRequestDto, FileEntity>();
             CreateMap<FileEntity, FileResponseDto>();
+            CreateMap<FileShareEntity, FileShareResponseDto>();
         }
     }
 }

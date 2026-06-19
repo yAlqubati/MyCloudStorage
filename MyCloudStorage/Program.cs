@@ -124,6 +124,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IFolderRepo, FolderRepo>();
 builder.Services.AddScoped<IFileRepo, FileRepo>();
 builder.Services.AddScoped<IUploadSessionRepo, UploadSessionRepo>();
+builder.Services.AddScoped<IFileShareRepo, FileShareRepo>();
 
 
 // Services
@@ -133,7 +134,9 @@ builder.Services.AddScoped<IChunkedUploadService, ChunkedUploadService>();
 builder.Services.AddScoped<IStorageService, LocalStorageService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddScoped<IFileValidatorService, FileValidationService>();
+builder.Services.AddScoped<IShareFileService, ShareFileService>();
 builder.Services.AddProblemDetails();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();

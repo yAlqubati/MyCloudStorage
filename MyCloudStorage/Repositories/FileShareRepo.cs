@@ -57,7 +57,7 @@ namespace MyCloudStorage.Repositories
         {
             return await _context.SharedFiles
                             .Include(s => s.SharedWith)
-                            .Where(s => s.Id == fileId && s.OwnerId == ownerId).ToListAsync();
+                            .Where(s => s.FileId == fileId && s.OwnerId == ownerId).ToListAsync();
         }
 
         public async Task SaveChangesAsync()
