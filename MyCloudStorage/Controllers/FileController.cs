@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.Domain.Entities;
 using MyCloudStorage.DTOs.File;
@@ -14,6 +15,7 @@ namespace MyCloudStorage.Controllers
     [ApiController]
     [Route("api/files")]
     [Authorize]
+    [EnableRateLimiting("api")]
     public class FileController : ControllerBase
     {
         private readonly IFileService _fileService;

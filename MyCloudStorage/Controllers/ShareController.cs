@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.DTOs.File;
 using Superpower.Model;
@@ -15,6 +16,7 @@ namespace MyCloudStorage.Controllers
     [ApiController]
     [Route("api/share")]
     [Authorize]
+    [EnableRateLimiting("api")]
     public class ShareController : ControllerBase
     {
         private readonly IShareFileService _shareService;

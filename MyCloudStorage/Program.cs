@@ -14,6 +14,8 @@ using Serilog;
 using Serilog.Events;
 using Microsoft.OpenApi.Models;
 using MyCloudStorage.Exceptions;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 
 Env.Load();
@@ -141,7 +143,107 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
+// Rate limiter
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+
+        var retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retry)
+            ? retry.TotalSeconds.ToString()
+            : "60";
+
+        context.HttpContext.Response.Headers["Retry-After"] = retryAfter;
+
+        await context.HttpContext.Response.WriteAsync(
+            $"{{\"title\":\"Too Many Requests\",\"status\":429," +
+            $"\"detail\":\"Rate limit exceeded. Try again in {retryAfter} seconds.\"}}",
+            cancellationToken);
+    };
+
+    
+    options.AddPolicy("auth", httpContext =>
+    {
+        // Partition by ip
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+
+    
+    options.AddPolicy("api", httpContext =>
+    {
+
+        var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                    ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(userId, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 50,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 5
+        });
+    });
+
+    options.AddPolicy("upload", httpContext =>
+    {
+        var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                    ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(userId, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 300,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 10
+        });
+    });
+
+    
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var partitionKey = GetPartitionKey(httpContext);
+
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 200,
+            Window = TimeSpan.FromMinutes(1)
+        });
+    });
+});
+
+// Helper — partition by user ID if authenticated, otherwise by IP
+static string GetPartitionKey(HttpContext httpContext)
+{
+    var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    return userId ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        
+        if ((await context.Database.GetPendingMigrationsAsync()).Any())
+        {
+            await context.Database.MigrateAsync();
+            Console.WriteLine("--> Database migrations applied successfully.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"--> Error applying migrations: {ex.Message}");
+    }
+}
+
 app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
@@ -152,6 +254,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -180,33 +284,12 @@ app.MapGet("/weatherforecast", () =>
 .WithOpenApi();
 
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        
-        if ((await context.Database.GetPendingMigrationsAsync()).Any())
-        {
-            await context.Database.MigrateAsync();
-            Console.WriteLine("--> Database migrations applied successfully.");
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"--> Error applying migrations: {ex.Message}");
-    }
-}
+
 
 
 
 
 app.Run();
-
-internal interface IFileValidationService
-{
-}
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {

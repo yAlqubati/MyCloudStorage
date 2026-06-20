@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.DTOs.User;
@@ -13,6 +14,7 @@ namespace MyCloudStorage.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [EnableRateLimiting("auth")]
     public class AuthController : ControllerBase
     {
        private readonly IAuthService _authService;

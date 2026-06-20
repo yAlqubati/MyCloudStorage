@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.DTOs.Folder;
 
@@ -13,6 +14,7 @@ namespace MyCloudStorage.Controllers
     [ApiController]
     [Route("api/folders")]
     [Authorize]
+    [EnableRateLimiting("api")]
     public class FolderController : ControllerBase
     {
         private readonly IFolderService _folderService;

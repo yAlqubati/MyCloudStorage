@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MyCloudStorage.Application.Interfaces;
 using MyCloudStorage.DTOs.File;
 
@@ -13,6 +14,7 @@ namespace MyCloudStorage.Controllers
     [ApiController]
     [Route("api/upload")]
     [Authorize]
+    [EnableRateLimiting("upload")]
     public class ChunkedUploadController : ControllerBase
     {
         private readonly IChunkedUploadService _uploadService;
