@@ -99,20 +99,19 @@ namespace MyCloudStorage.Controllers
 
         public void SetTokenCookies(string accessToken, string refreshToken)
         {
-            // !!!!! IN PRODUCTION YOU NEED TO CONFIGURE THOSE CORRECTLY !!!!!!!
             var accessTokenOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Lax,
+                Secure = true,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddMinutes(10)
             };
 
             var refreshTokenOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Lax,
+                Secure = true,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddDays(7),
                 Path = "/api/auth/refresh"
             };

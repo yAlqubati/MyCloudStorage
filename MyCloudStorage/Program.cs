@@ -16,6 +16,7 @@ using Microsoft.OpenApi.Models;
 using MyCloudStorage.Exceptions;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 
 
 Env.Load();
@@ -139,13 +140,14 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.HttpOnly = false;
     options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
 builder.Services.AddCors( options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("https://localhost:5173")
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -275,7 +277,15 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseHttpsRedirection();
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedHeadersOptions.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
+
+
 app.UseCors("Frontend");
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
