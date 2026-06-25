@@ -1,7 +1,7 @@
+CORS
 add compressed files
 check security
 email verification
-rate limiting
 
 share files by link
 search

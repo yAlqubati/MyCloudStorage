@@ -119,7 +119,38 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY")))
         };
+    
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            if (context.Request.Cookies.ContainsKey("accessToken"))
+            {
+                context.Token = context.Request.Cookies["accessToken"];
+            }
+            return Task.CompletedTask;
+        }
+    };
     });
+
+// !!! YOU NEED TO RECONFIGURE BEFORE PRODUCTION !!!
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.HttpOnly = false;
+    options.Cookie.SameSite = SameSiteMode.None;
+});
+
+builder.Services.AddCors( options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins("https://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 
 // Repositories
@@ -245,8 +276,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("Frontend");
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

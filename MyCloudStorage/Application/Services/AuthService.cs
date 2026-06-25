@@ -91,5 +91,22 @@ namespace MyCloudStorage.Application.Services
                 RefreshToken = refreshToken
             };
         }
+
+        public async Task<CurrentUserRequestDto?> GetCurrentUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return null;
+
+
+            return new CurrentUserRequestDto
+            {
+                Email = user.Email,
+                UserName = user.UserName
+            };
+        }
+
+        
     }
 }

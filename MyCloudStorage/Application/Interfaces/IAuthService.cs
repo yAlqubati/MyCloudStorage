@@ -11,6 +11,7 @@ namespace MyCloudStorage.Application.Interfaces
     {
         public Task<AuthResponseDto> RegisterAsync(RegisterUserDto newUserDto);
         public Task<AuthResponseDto> LoginAsync(LoginUserDto userDto);
+        public Task<CurrentUserRequestDto?> GetCurrentUserAsync(string userId);
 
     }
 }
