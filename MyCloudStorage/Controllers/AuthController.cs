@@ -120,5 +120,21 @@ namespace MyCloudStorage.Controllers
             Response.Cookies.Append("refreshToken", refreshToken, refreshTokenOptions);
         }
 
+        [HttpPost("changePassword")]
+        [Authorize]
+        public async Task<IActionResult> changePassword([FromBody] ChangePasswordRequestDto request)
+        {
+            var result = await _authService.ChangePasswordAsync(request, ownerId);
+
+            if (!result.Success)
+                return BadRequest(new { error = result.Errors });
+
+            Response.Cookies.Delete("accessToken");
+            Response.Cookies.Delete("refreshToken");
+
+            return Ok(new { message = "Password changed successfully. Please log in again." });
+        }
+
+
     }
 }

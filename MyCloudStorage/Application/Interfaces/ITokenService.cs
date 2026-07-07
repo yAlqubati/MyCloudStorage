@@ -12,5 +12,6 @@ namespace MyCloudStorage.Application.Interfaces
         public string CreateToken(User user);
         public Task<AuthResponseDto> RefreshToken(string refreshToken); 
         public Task<string> CreateRefreshTokenAsync(string userId);
+        public Task RevokeAllRefreshTokens(string userId);
     }
 }

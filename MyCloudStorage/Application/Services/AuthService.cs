@@ -92,6 +92,33 @@ namespace MyCloudStorage.Application.Services
             };
         }
 
+        public async Task<AuthResponseDto> ChangePasswordAsync(ChangePasswordRequestDto request, string userId)
+        {
+            if(request.CurrentPassword == request.NewPassword)
+            {
+                return new AuthResponseDto
+                {
+                    Success= false,
+                    Errors= "New password can't match the old password"
+                };
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if(user is null)
+                return new AuthResponseDto{ Success = false, Errors = "user not found"};
+
+            var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                return new AuthResponseDto{ Success = false, Errors = "Something went wrong, check your current password"};
+            }
+
+            await _tokenService.RevokeAllRefreshTokens(userId);
+
+            return new AuthResponseDto{ Success = true};
+        }
+
         public async Task<CurrentUserRequestDto?> GetCurrentUserAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);

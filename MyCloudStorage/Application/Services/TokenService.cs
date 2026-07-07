@@ -116,5 +116,20 @@ namespace MyCloudStorage.Application.Services
 
             return refreshToken;
         }
+
+        public async Task RevokeAllRefreshTokens(string userId)
+        {
+            var tokens = await _context.RefreshTokens
+                .Where(t => t.UserId == userId && !t.IsRevoked)
+                .ToListAsync();
+
+            foreach (var token in tokens)
+            {
+                token.IsRevoked = true;
+                token.RevokedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+        }
     }
 }
