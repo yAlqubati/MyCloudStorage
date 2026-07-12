@@ -1,6 +1,5 @@
 add compressed files
 check security
-implement the forgot password
 
 share files by link
 search

@@ -18,6 +18,9 @@ services:
       - JWT_ISSUER="https://api.mystorage.live" 
       - JWT_AUDIENCE="https://api.mystorage.live"
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=my_cloud_storage_db;Username=postgres;Password=${DB_PASSWORD:-postgres_password};
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_KEY=${SMTP_KEY}
     volumes:
       - /app/mycloudstorage/uploads:/app/uploads # The magic line keeping uploaded files safe!
     deploy:
