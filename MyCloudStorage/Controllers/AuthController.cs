@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +11,7 @@ namespace MyCloudStorage.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [EnableRateLimiting("auth")]
+    // [EnableRateLimiting("auth")]
     public class AuthController : ControllerBase
     {
        private readonly IAuthService _authService;
@@ -36,7 +32,10 @@ namespace MyCloudStorage.Controllers
             if (!result.Success)
                 return BadRequest(result.Errors);
 
-            return Ok("User created");
+            return StatusCode(201, new
+            {
+                message = "Account created. Please check your email to verify your account before logging in."
+            });
         }
 
         [HttpPost("login")]
@@ -120,6 +119,25 @@ namespace MyCloudStorage.Controllers
             Response.Cookies.Append("refreshToken", refreshToken, refreshTokenOptions);
         }
 
+        [HttpPost("resend-verification")]
+        public async Task<IActionResult> ResendVerification([FromBody] ForgotPasswordDto request)
+        {
+            await _authService.ResendVerificationEmailAsync(request.Email);
+
+            return Ok(new { message = "If that email is registered and unverified, a new link has been sent." });
+        }
+
+        [HttpGet("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string token)
+        {
+            var result = await _authService.VerifyEmailAsync(userId, token);
+
+            if (!result.Success)
+                return BadRequest(new { error = result.Errors });
+
+            return Ok(new { message = "Email verified successfully. You can now log in." });
+        }
+
         [HttpPost("changePassword")]
         [Authorize]
         public async Task<IActionResult> changePassword([FromBody] ChangePasswordRequestDto request)
@@ -133,6 +151,24 @@ namespace MyCloudStorage.Controllers
             Response.Cookies.Delete("refreshToken");
 
             return Ok(new { message = "Password changed successfully. Please log in again." });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+        {
+            await _authService.ForgotPasswordAsync(request);
+            return Ok(new { message = "If that email is registered, a reset link has been sent." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
+        {
+            var result = await _authService.ResetPasswordAsync(request);
+
+            if (!result.Success)
+                return BadRequest(new { error = result.Errors });
+
+            return Ok(new { message = "Password reset successfully. Please log in with your new password." });
         }
 
 

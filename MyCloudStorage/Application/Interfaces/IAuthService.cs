@@ -13,6 +13,10 @@ namespace MyCloudStorage.Application.Interfaces
         public Task<AuthResponseDto> LoginAsync(LoginUserDto userDto);
         public Task<CurrentUserRequestDto?> GetCurrentUserAsync(string userId);
         public Task<AuthResponseDto> ChangePasswordAsync(ChangePasswordRequestDto request, string userId);
+        public Task<AuthResponseDto> VerifyEmailAsync(string userId, string verificationToken);
+        public Task<AuthResponseDto> ResendVerificationEmailAsync(string email);
+        Task ForgotPasswordAsync(ForgotPasswordDto request);
+        Task<AuthResponseDto> ResetPasswordAsync(ResetPasswordDto request);
 
     }
 }

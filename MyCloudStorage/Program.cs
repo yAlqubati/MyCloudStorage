@@ -170,6 +170,7 @@ builder.Services.AddScoped<IStorageService, LocalStorageService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddScoped<IFileValidatorService, FileValidationService>();
 builder.Services.AddScoped<IShareFileService, ShareFileService>();
+builder.Services.AddScoped<IEmailService, SmptEmailService>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHttpContextAccessor();
 
