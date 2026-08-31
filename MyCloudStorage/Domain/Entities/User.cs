@@ -8,6 +8,7 @@ namespace MyCloudStorage.Domain.Entities
 {
     public class User : IdentityUser
     {
-        
+        public long StorageUsed { get; set; } = 0;
+        public long StorageQuota { get; set; } = 3L * 1024 * 1024 * 1024;
     }
 }

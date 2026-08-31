@@ -1,7 +1,11 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MyCloudStorage.Application.Interfaces;
+using MyCloudStorage.Data;
 using MyCloudStorage.Domain.Entities;
 using MyCloudStorage.DTOs.File;
+using MyCloudStorage.Exceptions;
 
 namespace MyCloudStorage.Application.Services
 {
@@ -16,7 +20,8 @@ namespace MyCloudStorage.Application.Services
         private readonly string _tempPath;
         private readonly IStorageService _storageService;
         private readonly IFileValidatorService _fileValidationService;
-
+        private readonly UserManager<User> _userManager;
+        private readonly ApplicationDbContext _context;
         public ChunkedUploadService(
             IUploadSessionRepo sessionRepo,
             IFileRepo fileRepo,
@@ -25,7 +30,9 @@ namespace MyCloudStorage.Application.Services
             IConfiguration config,
             ILogger<ChunkedUploadService> logger,
             IStorageService storageService,
-            IFileValidatorService fileValidationService
+            IFileValidatorService fileValidationService,
+            UserManager<User> userManager,
+            ApplicationDbContext context
             )
         {
             _sessionRepo = sessionRepo;
@@ -37,6 +44,8 @@ namespace MyCloudStorage.Application.Services
             _tempPath = config["Storage:TempPath"] ?? "uploads/temp";
             _storageService = storageService;
             _fileValidationService = fileValidationService;
+            _userManager = userManager;
+            _context = context;
         }
 
         public async Task CancelUploadAsync(Guid sessionId, string ownerId)
@@ -50,6 +59,20 @@ namespace MyCloudStorage.Application.Services
 
         public async Task<StartUploadResponseDto> StartUploadAsync(StartUploadRequestDto request, string ownerId)
         {
+            var user = await _userManager.FindByIdAsync(ownerId);
+            if (user is null)
+                throw new NotFoundException("User not found.");
+
+            // Check quota BEFORE doing anything else
+            var remainingStorage = user.StorageQuota - user.StorageUsed;
+            if (request.TotalSize > remainingStorage)
+            {
+                var remainingMb = remainingStorage / 1024 / 1024;
+                var requestedMb = request.TotalSize / 1024 / 1024;
+                throw new ValidationException(
+                    $"Insufficient storage. You need {requestedMb}MB but only have {remainingMb}MB remaining.");
+            }
+
             if (request.FolderId.HasValue)
             {
                 var folder = await _folderRepo.GetByIdAsync(request.FolderId.Value, ownerId);
@@ -159,43 +182,49 @@ namespace MyCloudStorage.Application.Services
             var storageKey = $"{session.UserId}/{Guid.NewGuid()}{extension}";
             var tempAssembledPath = Path.Combine(_tempPath, $"{session.Id}_assembled{extension}");
 
-
-            using (var finalStream = new FileStream(
-                tempAssembledPath,
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.None,
-                bufferSize: 81920,
-                useAsync: true))
-            {
-                for (int i = 0; i < session.TotalChunks; i++)
-                {
-                    var chunkPath = Path.Combine(session.TempDirectory, $"chunk_{i}");
-
-                    if (!File.Exists(chunkPath))
-                        throw new InvalidOperationException($"Chunk {i} is missing. Cannot assemble file.");
-
-                    using var chunkStream = new FileStream(
-                        chunkPath,
-                        FileMode.Open,
-                        FileAccess.Read,
-                        FileShare.None,
-                        bufferSize: 81920,
-                        useAsync: true);
-
-                    await chunkStream.CopyToAsync(finalStream);
-                }
-            }
-
             try
             {
-                await _fileValidationService.ValidationAsync(tempAssembledPath, session.FileName, session.TotalSize, session.FileType);
-                
+                // Step 1 — assemble chunks into temp file
+                using (var finalStream = new FileStream(
+                    tempAssembledPath,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    bufferSize: 81920,
+                    useAsync: true))
+                {
+                    for (int i = 0; i < session.TotalChunks; i++)
+                    {
+                        var chunkPath = Path.Combine(session.TempDirectory, $"chunk_{i}");
+
+                        if (!File.Exists(chunkPath))
+                            throw new InvalidOperationException($"Chunk {i} is missing. Cannot assemble file.");
+
+                        using var chunkStream = new FileStream(
+                            chunkPath,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.None,
+                            bufferSize: 81920,
+                            useAsync: true);
+
+                        await chunkStream.CopyToAsync(finalStream);
+                    }
+                }
+
+                // Step 2 — validate
+                await _fileValidationService.ValidationAsync(
+                    tempAssembledPath,
+                    session.FileName,
+                    session.TotalSize,
+                    session.FileType);
+
+                // Step 3 — move to permanent storage
                 var finalPath = Path.Combine(_basePath, storageKey);
                 Directory.CreateDirectory(Path.GetDirectoryName(finalPath)!);
                 File.Move(tempAssembledPath, finalPath);
 
-                // Save metadata to DB
+                // Step 4 — save file metadata to DB
                 var fileEntity = new FileEntity
                 {
                     Name = session.FileName,
@@ -207,32 +236,31 @@ namespace MyCloudStorage.Application.Services
                 };
 
                 await _fileRepo.CreateFileAsync(fileEntity);
+
+
+                await _context.Users
+                    .Where(u => u.Id == session.UserId)
+                    .ExecuteUpdateAsync(u => u.SetProperty(
+                        x => x.StorageUsed,
+                        x => x.StorageUsed + session.TotalSize));
+
                 await CleanupSessionAsync(session);
                 await _sessionRepo.SaveChangesAsync();
 
-
-                _logger.LogInformation("Assembled {FileName} from {Chunks} chunks, key: {Key}",
+                _logger.LogInformation(
+                    "Assembled {FileName} from {Chunks} chunks, key: {Key}",
                     session.FileName, session.TotalChunks, storageKey);
 
                 return _mapper.Map<FileResponseDto>(fileEntity);
-                
             }
-            // you need to add another catch for virus detection, you will change the status and save in the db no CleanUpSessionAsync
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Validation or processing failed for file {FileName}", session.FileName);
-
                 if (File.Exists(tempAssembledPath))
-                {
                     File.Delete(tempAssembledPath);
-                }
-                
+
                 await CleanupSessionAsync(session);
-                await _sessionRepo.SaveChangesAsync();
                 throw;
             }
-
-        
         }
 
         private async Task CleanupSessionAsync(UploadSession session)

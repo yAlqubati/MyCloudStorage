@@ -5,6 +5,6 @@ share files by link
 search
 
 
-if i shared the file and it expiered, i want to be able to make a new share
-improve the user settings, also add hard password validation, and forget password
 
+improve the user settings, also add hard password validation,
+add upload limit

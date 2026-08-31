@@ -1,5 +1,7 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using MyCloudStorage.Application.Interfaces;
+using MyCloudStorage.Data;
 using MyCloudStorage.Domain.Entities;
 using MyCloudStorage.DTOs.File;
 using MyCloudStorage.Exceptions;
@@ -13,14 +15,23 @@ namespace MyCloudStorage.Application.Services
         private readonly IFolderRepo _folderRepo;
         private readonly ILogger<FileService> _logger;
         private readonly IStorageService _storageService;
+        private readonly ApplicationDbContext _context;
 
-        public FileService(IFileRepo fileRepo, IMapper mapper, IFolderRepo folderRepo, ILogger<FileService> logger, IStorageService storageService)
+        public FileService(
+            IFileRepo fileRepo,
+            IMapper mapper,
+            IFolderRepo folderRepo,
+            ILogger<FileService> logger,
+            IStorageService storageService,
+            ApplicationDbContext context
+            )
         {
             _fileRepo = fileRepo;
             _mapper = mapper;
             _folderRepo = folderRepo;
             _logger = logger;
             _storageService = storageService;
+            _context = context;
         }
 
 
@@ -87,9 +98,17 @@ namespace MyCloudStorage.Application.Services
             var file = await _fileRepo.GetByIdAsync(fileId, ownerId);
             if (file is null) return false;
 
+            await _context.Users
+            .Where(u => u.Id == ownerId)
+            .ExecuteUpdateAsync(u => u.SetProperty(
+                x => x.StorageUsed,
+                x => x.StorageUsed - file.Size));
+
+            await _storageService.DeleteFileAsync(file.StorageKey);
+
             await _fileRepo.DeleteFile(file);
             await _fileRepo.SaveChangesAsync();
-
+    
             return true;
         }
 
