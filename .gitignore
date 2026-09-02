@@ -11,3 +11,6 @@ obj/
 .vscode/
 
 /uploads
+
+appsettings.json
+appsettings.Development.json
