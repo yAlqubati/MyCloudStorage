@@ -17,6 +17,7 @@ using MyCloudStorage.Exceptions;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using MyCloudStorage.Configuration;
 
 
 Env.Load();
@@ -84,6 +85,10 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 var connectionString = builder.Configuration.GetConnectionString("Default")
     .Replace("%DB_PASSWORD%",Environment.GetEnvironmentVariable("DB_PASSWORD"));
 
+var corsSettings = builder.Configuration
+    .GetSection(CorsSettings.SectionName)
+    .Get<CorsSettings>() ?? new CorsSettings();
+
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => 
@@ -147,7 +152,7 @@ builder.Services.AddCors( options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("https://mystorage.live")
+        policy.WithOrigins(corsSettings.AllowedOrigins.ToArray())
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -173,9 +178,21 @@ builder.Services.AddScoped<IShareFileService, ShareFileService>();
 builder.Services.AddScoped<IEmailService, SmptEmailService>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHttpContextAccessor();
-
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+
+// config
+builder.Services.Configure<StorageSettings>(
+    builder.Configuration.GetSection(StorageSettings.SectionName));
+
+
+
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection(EmailSettings.SectionName));
+
+builder.Services.Configure<CorsSettings>(
+    builder.Configuration.GetSection(CorsSettings.SectionName));
+
 
 // Rate limiter
 builder.Services.AddRateLimiter(options =>
@@ -285,26 +302,14 @@ var forwardedHeadersOptions = new ForwardedHeadersOptions
 forwardedHeadersOptions.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
 
 app.UseForwardedHeaders(forwardedHeadersOptions);
-
-
-app.UseCors("Frontend");
-app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
-
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseSerilogRequestLogging();
+app.UseCors("Frontend");
 app.UseRateLimiter();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
-
 app.MapControllers();
 
 var summaries = new[]
@@ -312,30 +317,7 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
-
-
-
-
-
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+

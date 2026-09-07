@@ -1,7 +1,9 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MyCloudStorage.Application.Interfaces;
+using MyCloudStorage.Configuration;
 using MyCloudStorage.Data;
 using MyCloudStorage.Domain.Entities;
 using MyCloudStorage.DTOs.File;
@@ -16,12 +18,12 @@ namespace MyCloudStorage.Application.Services
         private readonly IFolderRepo _folderRepo;
         private readonly IMapper _mapper;
         private readonly ILogger<ChunkedUploadService> _logger;
-        private readonly string _basePath;
-        private readonly string _tempPath;
         private readonly IStorageService _storageService;
         private readonly IFileValidatorService _fileValidationService;
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IOptions<StorageSettings> _storageSettings;
+
         public ChunkedUploadService(
             IUploadSessionRepo sessionRepo,
             IFileRepo fileRepo,
@@ -32,7 +34,8 @@ namespace MyCloudStorage.Application.Services
             IStorageService storageService,
             IFileValidatorService fileValidationService,
             UserManager<User> userManager,
-            ApplicationDbContext context
+            ApplicationDbContext context,
+            IOptions<StorageSettings> storageSettings
             )
         {
             _sessionRepo = sessionRepo;
@@ -40,12 +43,11 @@ namespace MyCloudStorage.Application.Services
             _folderRepo = folderRepo;
             _mapper = mapper;
             _logger = logger;
-            _basePath = config["Storage:BasePath"] ?? "uploads";
-            _tempPath = config["Storage:TempPath"] ?? "uploads/temp";
             _storageService = storageService;
             _fileValidationService = fileValidationService;
             _userManager = userManager;
             _context = context;
+            _storageSettings = storageSettings;
         }
 
         public async Task CancelUploadAsync(Guid sessionId, string ownerId)
@@ -91,7 +93,7 @@ namespace MyCloudStorage.Application.Services
             }
 
             var sessionId = Guid.NewGuid();
-            var tempDir = Path.Combine(_tempPath, sessionId.ToString());
+            var tempDir = Path.Combine(_storageSettings.Value.TempPath, sessionId.ToString());
             Directory.CreateDirectory(tempDir);
 
             var uploadSession = new UploadSession
@@ -180,7 +182,7 @@ namespace MyCloudStorage.Application.Services
         {
             var extension = Path.GetExtension(session.FileName);
             var storageKey = $"{session.UserId}/{Guid.NewGuid()}{extension}";
-            var tempAssembledPath = Path.Combine(_tempPath, $"{session.Id}_assembled{extension}");
+            var tempAssembledPath = Path.Combine(_storageSettings.Value.TempPath, $"{session.Id}_assembled{extension}");
 
             try
             {
@@ -220,7 +222,7 @@ namespace MyCloudStorage.Application.Services
                     session.FileType);
 
                 // Step 3 — move to permanent storage
-                var finalPath = Path.Combine(_basePath, storageKey);
+                var finalPath = Path.Combine(_storageSettings.Value.BasePath, storageKey);
                 Directory.CreateDirectory(Path.GetDirectoryName(finalPath)!);
                 File.Move(tempAssembledPath, finalPath);
 

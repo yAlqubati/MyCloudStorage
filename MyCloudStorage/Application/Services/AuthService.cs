@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using MyCloudStorage.Application.Interfaces;
+using MyCloudStorage.Configuration;
 using MyCloudStorage.Domain.Entities;
 using MyCloudStorage.DTOs.User;
 using MyCloudStorage.Infrastructure.Email;
@@ -19,6 +21,7 @@ namespace MyCloudStorage.Application.Services
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
         private readonly  ILogger<IAuthService> _logger;
+        private readonly IOptions<StorageSettings> _storageSettings;
 
         public AuthService(
             UserManager<User> userManager,
@@ -26,7 +29,9 @@ namespace MyCloudStorage.Application.Services
             ITokenService tokenService,
             IConfiguration config,
             IEmailService emailService,
-            ILogger<IAuthService> logger)
+            ILogger<IAuthService> logger,
+            IOptions<StorageSettings> storageSettings
+            )
         {
             _signinManager = signInManager;
             _userManager = userManager;
@@ -34,6 +39,7 @@ namespace MyCloudStorage.Application.Services
             _config = config;
             _emailService = emailService;
             _logger = logger;
+            _storageSettings = storageSettings;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterUserDto newUserDto)
@@ -52,6 +58,7 @@ namespace MyCloudStorage.Application.Services
                 Email = newUserDto.Email,
                 UserName = newUserDto.Email,
                 EmailConfirmed = false,
+                StorageQuota = _storageSettings.Value.DefaultUserQuotaBytes
             };
 
             var result = await _userManager.CreateAsync(newUser, newUserDto.Password);
