@@ -12,6 +12,7 @@ obj/
 .vscode/
 
 /uploads
+uploads/*
 
 appsettings.json
 appsettings.Development.json

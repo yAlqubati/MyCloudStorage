@@ -7,6 +7,6 @@ namespace MyCloudStorage.Application.Interfaces
 {
     public interface IFileValidatorService
     {
-        Task ValidationAsync(string filePath, string fileName, long fileSize, string fileType);
+        Task ValidationAsync(string filePath, string fileName, string fileType);
     }
 }

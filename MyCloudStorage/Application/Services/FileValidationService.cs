@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using MyCloudStorage.Application.Interfaces;
+using MyCloudStorage.Configuration;
 using Serilog;
 
 namespace MyCloudStorage.Application.Services
@@ -11,7 +13,7 @@ namespace MyCloudStorage.Application.Services
     public class FileValidationService : IFileValidatorService
     {
         private readonly ILogger<IFileValidatorService> _logger;
-        private readonly long _maxFileSizeBytes = 500 * 1024 * 1024;
+        private readonly IOptions<StorageSettings> _storageSettings;
 
         private static readonly HashSet<string> AllowedMimeTypes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -52,15 +54,15 @@ namespace MyCloudStorage.Application.Services
         };
 
 
-        public FileValidationService(ILogger<IFileValidatorService> logger)
+        public FileValidationService(ILogger<IFileValidatorService> logger,IOptions<StorageSettings> storageSettings)
         {
             _logger = logger;
+            _storageSettings = storageSettings;
         }
 
 
-        public async Task ValidationAsync(string filePath, string fileName, long fileSize, string fileType)
+        public async Task ValidationAsync(string filePath, string fileName, string fileType)
         {
-            ValidateSize(fileSize);
             ValidateExtension(fileName);
             ValidateMimeType(fileType, fileName);
             await ValidateMagicBytesAsync(filePath, fileName);
@@ -69,16 +71,6 @@ namespace MyCloudStorage.Application.Services
         }
 
 
-        private void ValidateSize(long fileSize)
-        {
-            if (fileSize <= 0)
-                throw new ValidationException("File is empty.");
-
-            if (fileSize > _maxFileSizeBytes)
-                throw new ValidationException(
-                    $"File size {fileSize / 1024 / 1024}MB exceeds the maximum allowed size of {_maxFileSizeBytes / 1024 / 1024}MB.");
-        }
-
         private void ValidateExtension(string fileName)
         {
             var extension = Path.GetExtension(fileName);
@@ -86,13 +78,13 @@ namespace MyCloudStorage.Application.Services
             if (string.IsNullOrEmpty(extension))
                 throw new ValidationException("File must have an extension.");
 
-            if (!AllowedExtensions.Contains(extension))
+            if (!_storageSettings.Value.AllowedExtensions.Contains(extension))
                 throw new ValidationException($"File type '{extension}' is not allowed.");
         }
 
         private void ValidateMimeType(string fileType, string fileName)
         {
-            if (!AllowedMimeTypes.Contains(fileType))
+            if (!_storageSettings.Value.AllowedMimeTypes.Contains(fileType))
                 throw new ValidationException($"MIME type '{fileType}' is not allowed.");
 
             // Cross-check: extension and MIME type must agree

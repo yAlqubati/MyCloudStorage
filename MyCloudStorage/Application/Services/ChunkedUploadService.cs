@@ -218,7 +218,6 @@ namespace MyCloudStorage.Application.Services
                 await _fileValidationService.ValidationAsync(
                     tempAssembledPath,
                     session.FileName,
-                    session.TotalSize,
                     session.FileType);
 
                 // Step 3 — move to permanent storage
