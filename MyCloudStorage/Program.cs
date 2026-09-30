@@ -123,7 +123,7 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
 
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY")))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")))
         };
     
     options.Events = new JwtBearerEvents
