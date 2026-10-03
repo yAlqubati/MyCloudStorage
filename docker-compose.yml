@@ -60,7 +60,7 @@ services:
       context: ../MyCloudStorageFrontend/file-manager
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=https://api.mystorage.live
+        - VITE_API_URL=/api
     container_name: cloud_frontend
     ports:
       - "127.0.0.1:3000:80"
