@@ -1,25 +1,17 @@
-# =========================
-# BUILD STAGE
-# =========================
+# ── Build stage ───────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /src
 
-# Copy csproj first (better caching)
+# Copy csproj first for better layer caching
 COPY MyCloudStorage.csproj ./
-
 RUN dotnet restore
 
-# Copy everything
+# Copy everything and publish
 COPY . .
-
-# Publish project explicitly
 RUN dotnet publish -c Release -o /app/publish
 
-
-# =========================
-# RUNTIME STAGE
-# =========================
+# ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 
 WORKDIR /app

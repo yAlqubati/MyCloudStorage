@@ -82,8 +82,11 @@ builder.Services.AddControllers();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 
-var connectionString = builder.Configuration.GetConnectionString("Default")
-    .Replace("%DB_PASSWORD%",Environment.GetEnvironmentVariable("DB_PASSWORD"));
+// Falls back to appsettings.json — used for local development without Docker
+var connectionString =
+    Environment.GetEnvironmentVariable("ConnectionStrings__Default")
+    ?? builder.Configuration.GetConnectionString("Default")!
+       .Replace("%DB_PASSWORD%", Environment.GetEnvironmentVariable("DB_PASSWORD"));
 
 var corsSettings = builder.Configuration
     .GetSection(CorsSettings.SectionName)
@@ -123,7 +126,7 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
 
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY")))
         };
     
     options.Events = new JwtBearerEvents

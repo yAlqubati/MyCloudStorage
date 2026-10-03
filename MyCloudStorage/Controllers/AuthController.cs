@@ -96,7 +96,7 @@ namespace MyCloudStorage.Controllers
             return Ok(new { success = true });
         }
 
-        public void SetTokenCookies(string accessToken, string refreshToken)
+        private void SetTokenCookies(string accessToken, string refreshToken)
         {
             var accessTokenOptions = new CookieOptions
             {
