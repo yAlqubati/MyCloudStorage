@@ -49,7 +49,7 @@ services:
       - SMTP_KEY=${SMTP_KEY}
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=my_cloud_storage_db;Username=postgres;Password=${DB_PASSWORD}
     volumes:
-      - uploads_data:/app/uploads
+      - /app/mycloudstorage/uploads:/app/uploads
     deploy:
       resources:
         limits:
@@ -80,4 +80,3 @@ networks:
 
 volumes:
   postgres_data:
-  uploads_data:
